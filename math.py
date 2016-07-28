@@ -10,6 +10,8 @@ def vectorScaleMSE(x, y):
     x = np.arange(100)
     y = x * 5 + np.random.random(x.shape)
 
+    return value c is about 5
+
     :param x, y:
      np.array, which gets flattened if not 1D.
     :return: real number c
