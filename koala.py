@@ -66,10 +66,11 @@ def rotationMatrixToEulerAngles(R):
 
     return np.array([x, y, z])
 
-def rigid_transform(X, Y):
+def Kabsch_algorithm(X, Y):
     """
     Based upon:
-    http://nghiaho.com/uploads/code/rigid_transform_3D.py_
+    1) https://en.wikipedia.org/wiki/Kabsch_algorith
+    2) http://nghiaho.com/?page_id=671
 
     Find rotation R and translation t:
     find R, st for Y = R * X' + t,
@@ -84,19 +85,17 @@ def rigid_transform(X, Y):
         Y = np.dot(X, R) + t
 
         # print the rotation and transform
-        print rigid_transform(X, Y)[0], '\n'
-        print rigid_transform(X, Y)[1]
+        print Kabsch_algorithm(X, Y)[0], '\n'
+        print Kabsch_algorithm(X, Y)[1]
 
 
     :param X, Y:
-        arrays of corresponding point coordinates, (N x 3)
+        arrays of corresponding point coordinates, (3 x N)
     :return:
         R: rotation matrix, (3 x 3)
         t: translation, (3,)
 
     """
-
-    from numpy.linalg import svd
     assert X.shape == Y.shape, "X and Y must have the same size"
 
     # Keeping dims allows to centre the points without hustling
