@@ -24,9 +24,10 @@ def vectorScaleMSE(x, y):
 
 def isRotationMatrix(R):
     """
+    Check if R is a rotation matrix in R^2 or R^3
 
     Example:
-    R = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+    R = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])  # rotation of 90 deg around z
     isRotationMatrix(R) -> True
 
     :param R:
@@ -35,9 +36,9 @@ def isRotationMatrix(R):
      Bool, is rotation matrix?
     """
     Rt = np.transpose(R)
-    shouldBeIdentity = np.dot(Rt, R)
+    shouldYeIdentity = np.dot(Rt, R)
     I = np.identity(3, dtype=R.dtype)
-    n = np.linalg.norm(I - shouldBeIdentity)
+    n = np.linalg.norm(I - shouldYeIdentity)
     return n < 1e-6
 
 
@@ -65,73 +66,60 @@ def rotationMatrixToEulerAngles(R):
 
     return np.array([x, y, z])
 
-def findRts(X, Y):
+def rigid_transform(X, Y):
     """
+    Based upon:
+    http://nghiaho.com/uploads/code/rigid_transform_3D.py_
 
-    BUGGY!
-    Find rotation R, translation t and scaling s:
-    find R, s, t for Y = s * R * X' + t,
-    such (Y - [s * R * X' + t])^2 is minimized.
-
-    Based upon (AUTHOR: Anton Semechko):
-    https://www.mathworks.com/matlabcentral/answers/40379-minimizing-mean-square-error-for-a-body-tracking-problem
+    Find rotation R and translation t:
+    find R, st for Y = R * X' + t,
+    such (Y - [R * X' + t])^2 is minimized.
 
     Example:
+        np.set_printoptions(precision=8, suppress=True)  # For convenience
+        R = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
+        t = np.array([0, 3, 0])
 
-    x = np.array([[i, 0, 0] for i in range(20)])
-    R = rotationMatrix(np.array([40, 10, 10]))
-    y = np.dot(x, R) + np.random.random(x.shape)
+        X = np.random.rand(10, 3)
+        Y = np.dot(X, R) + t
 
-    R_new, t, s = findRts(x, y)
+        # print the rotation and transform
+        print rigid_transform(X, Y)[0], '\n'
+        print rigid_transform(X, Y)[1]
 
-    print rotationMatrixToEulerAngles(R_new)
 
     :param X, Y:
         arrays of corresponding point coordinates, (N x 3)
     :return:
         R: rotation matrix, (3 x 3)
         t: translation, (3,)
-        s: scale, float
 
     """
 
     from numpy.linalg import svd
+    assert X.shape == Y.shape, "X and Y must have the same size"
 
-    assert False, "BUGGY?, are you sure you want to use it?"
+    # Keeping dims allows to centre the points without hustling
+    centroid_X = np.mean(X, axis=0, keepdims=True)
+    centroid_Y = np.mean(Y, axis=0, keepdims=True)
 
-    # Useful values
-    m = Y.shape[0]
+    # centre the points
+    XX = X - centroid_X
+    YY = Y - centroid_Y
 
-    # Centroids
-    C_y = np.mean(Y, axis=0, keepdims=True)
-    C_x = np.mean(X, axis=0, keepdims=True)
+    H = np.dot(XX.T, YY)
 
-    # Center the point sets
-    Y = Y - C_y
-    X = X - C_x
+    U, S, Vt = np.linalg.svd(H)
 
-    # compute the covariance matrix
-    Cmat = np.dot(Y.T, X) / m
+    R = np.dot(U, Vt)
 
-    # find rotation using SVD
-    U, _, V = np.linalg.svd(Cmat)
-    V = V.T
-    V[:, [1, 2]] = V[:, [2, 1]]
-    U[:, [1, 2]] = -U[:, [2, 1]]
+    # special reflection case
+    if np.linalg.det(R) < 0:
+        print "Reflection detected"
+        Vt[2, :] *= -1
+        R = np.dot(Vt, U.T)
 
-    R = np.dot(np.dot(U, np.diag([1, 1, np.linalg.det(U * V.T)])), V.T)
+    # find translation
+    t = -(np.dot(centroid_X, R) - centroid_Y)
 
-    # Find the scaling factor
-    Y_L2 = np.sum(Y * Y, axis=1)
-    X_L2 = np.sum(X * X, axis=1)
-
-    s = Y_L2 / X_L2
-    s = np.mean(np.sqrt(s))
-
-    # Translation
-    t = (s * np.dot(R, C_x.T))
-
-    # Reconstructing the Y from X and R, s, t
-    Xnew = s * np.dot(R, X.T).T + t.reshape((1, -1))
-
-    return R, t, s, Xnew
+    return R, t
