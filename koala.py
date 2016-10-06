@@ -158,4 +158,4 @@ def align_vectors(x, y):
     tmp2 = (1 - np.dot(x, y)) / (np.linalg.norm(np.cross(x, y))**2)
     R = tmp + np.linalg.matrix_power(sscm(np.cross(x, y)), 2) * tmp2
 
-    return R
+    return R.T
