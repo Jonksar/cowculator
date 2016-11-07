@@ -2,7 +2,7 @@
 
 Collection of optimizing math functions and machine learning candy.
 
-# Math
+## Math
 
 Implementation of:
 
@@ -11,7 +11,7 @@ Implementation of:
 * Finding rotation matrix between two vectors in R^3
 * Some other minor candy
 
-# Machine Learning
+## Machine Learning
 
 Implementation of:
 	
