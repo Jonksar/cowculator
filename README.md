@@ -1,4 +1,4 @@
-# KoalaTools
+# Koala Tools
 
 Collection of optimizing math functions and machine learning candy.
 
