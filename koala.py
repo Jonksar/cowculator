@@ -122,3 +122,40 @@ def Kabsch_algorithm(X, Y):
     t = -(np.dot(centroid_X, R) - centroid_Y)
 
     return R, t
+
+
+def sscm(v):
+
+    """
+    https://en.wikipedia.org/wiki/Skew-symmetric_matrix#Cross_product
+    scew-symmetric cross-product matrix
+    :param v:
+    :return:
+    """
+    assert np.squeeze(v).shape == (3,), "Vector must be in R^3"
+
+    return np.array([[0, -v[2], v[1]],
+                     [v[2], 0, -v[0]],
+                     [-v[1], v[0], 0]])
+
+
+def normalize(v):
+    return v / np.linalg.norm(v)
+
+
+def align_vectors(x, y):
+    """
+    Find rotation matrix in R^3 such that y = np.dot(x, R)
+
+    :param x, y: 3x1 vector
+    :return: Rotation matrix such that
+             y == np.dot(x, R)
+    """
+    x = normalize(x)
+    y = normalize(y)
+
+    tmp = np.eye(3) + sscm(np.cross(x, y))
+    tmp2 = (1 - np.dot(x, y)) / (np.linalg.norm(np.cross(x, y))**2)
+    R = tmp + np.linalg.matrix_power(sscm(np.cross(x, y)), 2) * tmp2
+
+    return R.T
