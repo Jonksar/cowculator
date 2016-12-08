@@ -124,6 +124,15 @@ def Kabsch_algorithm(X, Y):
     return R, t
 
 
+def Kabsch_algortihm_from_cov(cov):
+
+    U, S, Vt = np.linalg.svd(cov)
+
+    R = np.dot(U, Vt)
+
+    return R
+
+
 def sscm(v):
 
     """

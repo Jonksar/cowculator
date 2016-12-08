@@ -54,15 +54,37 @@ class ContinuousData:
         self.attention_windows = {}
 
     def add_data(self, data):
+        # Keep track of data
         self.iter += 1
-        assert np.size(data) == self.n_dim, "you can only add data of shape n_dim"
+
+        self._add_data(data)
+        self._calc_continuous()
+
+        # Make sure we don't have too much data
+        self._trim_data()
+
+    def add_attention_window(self, start=0, end=None, length=None):
+        assert end is not None or length is not None, "Please specify ending index or length of attention window"
+
+        if length is not None:
+            end = start + length
+
+        name = self._unique_window_name()
+        self.attention_windows[name] = SubWindowStatistics(parent=self, start=start, end=end)
+
+        return name
+
+    def _add_data(self, data):
+        if not isinstance(data, np.ndarray):
+            data = np.array(data)
+
         # Make sure data is of right shape
-        if len(data.shape) == 1:
-            data = data.reshape((-1, 1))
+        data = data.reshape((-1, 1))
 
         # Add data
         self.data = np.hstack((self.data, data))
 
+    def _calc_continuous(self):
         if self.track_metadata:
             # Keep track of data statistics
             if self.iter % self.calibration_iter == 0:
@@ -83,19 +105,6 @@ class ContinuousData:
                         self._calc_mean_attention_window(window, start=window.start, end=window.end)
                         self._calc_std_attention_window(window, start=window.start, end=window.end)
 
-        # Make sure we don't have too much data
-        self._trim_data()
-
-    def add_attention_window(self, start=0, end=None, length=None):
-        assert end is not None or length is not None, "Please specify ending index or length of attention window"
-
-        if length is not None:
-            end = start + length
-
-        name = self._unique_window_name()
-        self.attention_windows[name] = SubWindowStatistics(parent=self, start=start, end=end)
-
-        return name
 
     def _trim_data(self):
         self.data = self.data[:self.n_dim, -self.max_data:]
@@ -137,3 +146,53 @@ class ContinuousData:
             res = ''.join([choice(lowercase + digits) for _ in range(n)])
 
         return res
+
+    def mean(self):
+        return self._mwindow.mean
+
+    def std(self):
+        return self._mwindow.std
+
+    def std_sqrd(self):
+        return self._mwindow.std_sqrd
+
+
+class ContinuousDataFrame:
+    def __init__(self, calc_cov=False, **kwargs):
+        self.dataframe = kwargs
+
+        # settings
+        self.calc_cov = calc_cov
+
+        self.covariance = None
+        for x in kwargs.values():
+            assert isinstance(x, ContinuousData), "All the values in kwargs must be ContinuousData instances"
+
+    def _calc_covarience(self, names=("name1", "name2")):
+        d1, d2 = names
+        d1, d2 = self.dataframe[d1], self.dataframe[d2]
+
+        if self.covariance is None:
+            # initial
+            self.covariance = np.dot(d1.data, d2.data.T)
+
+        else:
+            self.covariance += -np.outer(d1.data[:, 0], d2.data[:, 0]) + np.outer(d1.data[:, -1], d2.data[:, -1])
+
+    def add_data(self, cov_names=None, **kwargs):
+
+        # do normal
+        for name, data in kwargs.iteritems():
+            self.dataframe[name]._add_data(data)
+            self.dataframe[name]._calc_continuous()
+
+        if cov_names is not None:
+            self._calc_covarience(names=cov_names)
+
+        for name, data in kwargs.iteritems():
+            self.dataframe[name]._trim_data()
+
+        return
+
+    def __getitem__(self, item):
+        return self.dataframe[item]
