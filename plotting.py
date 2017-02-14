@@ -139,13 +139,19 @@ class DynamicPlotterNumpy(DynamicPlotter):
         # For smoothing data coming in
         self.last_data = np.zeros(3)
 
-    def getdata(self):
-        pass
+        self.givedata_buffer = None
 
     def updateplot(self):
-        self.plotData = self.getdata()
-        self.plotData = self.plotData[:, -self._bufsize:]
-
+        if self.givedata_buffer != None:
+            data_vec  = self.givedata_buffer    # Get the data from buffer variable
+            # Pad with zeros if you have more lines than we were given data
+            data_vec = \
+                np.array([data_vec[i] if i < len(data_vec) else 0 \
+                          for i in range(self.n_curves)])
+            self.plotData = np.hstack((self.plotData, np.array(data_vec).reshape((-1, 1))))
+            self.plotData = self.plotData[:, -self._bufsize:]
+        else:
+            pass
         for i in range(self.n_curves):
             self.plot_lines[i].setData(self.x, self.plotData[i, -self._bufsize:])
 
@@ -155,7 +161,7 @@ class DynamicPlotterNumpy(DynamicPlotter):
 
 if __name__ == '__main__':
 
-    if input() == "":
+    if raw_input("input something:\n") == "":
         # Use this to see it in action
         plt = DynamicPlotter()
 
@@ -180,10 +186,10 @@ if __name__ == '__main__':
 
         # Initialize instances
         plt_np = DynamicPlotterNumpy()  # plotting device
-        p = Phone()                     # phone device
 
         @plt_np.data_wrapper
         def data_gen():
+            """
             phone_data = p.data
 
             res_data = np.array([phone_data['acc_x'] / 9.81,
@@ -193,13 +199,9 @@ if __name__ == '__main__':
                                  math.degrees(phone_data['gyr_y']),
                                  math.degrees(phone_data['gyr_z'])])
             """
-            fin_array = res_data
-            fin_array = np.array([fin_array[i] if i < len(fin_array) else 0 for i in range(self.n_curves)])
 
-            return np.hstack((self.plotData, np.array(fin_array).reshape((-1, 1))))
-            """
-
-        th = threading.Thread(target=p) # we are calling p.__call__() from thread
+            return [math.sin(time.time()), math.sin(time.time() * 2), math.sin(time.time() * 2.5)]
+        th = threading.Thread(target=data_gen) # we are calling p.__call__() from thread
         th.daemon = True                # Kill when main thread dies
 
 
