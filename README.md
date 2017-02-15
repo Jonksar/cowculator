@@ -1,7 +1,8 @@
-# Koala Tools
+## Cowculator
 
 Collection of one-step optimization algorithms I find useful, easy real-time
 plotting library and making neural networks easier.
+
 ## Math
 
 Implementation of:

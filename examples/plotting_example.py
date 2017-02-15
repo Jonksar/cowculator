@@ -1,13 +1,14 @@
-import numpy as np
-import random
-import time
 import math
+import numpy as np
+import os
+import random
+import sys
 import threading
+import time
 
-# Doing extraordinary magic in order to import from a folder above
-import sys, os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-import plotting
+from cowculator import plotting
+
 
 def plot_1d():
     # Use this to see it in action
