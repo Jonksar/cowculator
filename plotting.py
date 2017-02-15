@@ -142,7 +142,7 @@ class DynamicPlotterNumpy(DynamicPlotter):
         self.givedata_buffer = None
 
     def updateplot(self):
-        if self.givedata_buffer != None:
+        if self.givedata_buffer is not None:
             data_vec  = self.givedata_buffer    # Get the data from buffer variable
             # Pad with zeros if you have more lines than we were given data
             data_vec = \

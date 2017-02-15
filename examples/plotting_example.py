@@ -1,3 +1,4 @@
+import numpy as np
 import random
 import time
 import math
@@ -6,12 +7,11 @@ import threading
 # Doing extraordinary magic in order to import from a folder above
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-print sys.path
 import plotting
 
-def d_sin_plot():
+def plot_1d():
     # Use this to see it in action
-    plt = plotting.DynamicPlotter()
+    plt = plotting.DynamicPlotter(sampleinterval=0.01, timewindow=10.)
 
     # Example of how to give data to DynamicPlotter
     @plt.data_wrapper
@@ -31,9 +31,27 @@ def d_sin_plot():
     th.start() # Start thread
     plt.run()  # Start plotting
 
+def plot_np():
+    # Use this to see it in action
+    plt = plotting.DynamicPlotterNumpy(sampleinterval=0.01, timewindow=10.)
+
+    # Example of how to give data to DynamicPlotter
+    @plt.data_wrapper
+    def data_gen(n_dim=10):
+        noise = np.array([random.normalvariate(0., .2) for i in range(n_dim)])
+        data = np.array([float(i) * math.sin(time.time() * 2 *math.pi) for i in range(n_dim)]) + noise
+
+        return data
+
+    th = threading.Thread(target=data_gen)
+    th.daemon=True
+
+    th.start()
+    plt.run()
+
 
 def numpy_sin_plot():
     pass
 
 if __name__ == '__main__':
-    d_sin_plot()
+    plot_np()
