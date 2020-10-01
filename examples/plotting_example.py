@@ -55,9 +55,9 @@ def numpy_sin_plot():
     pass
 
 if __name__ == '__main__':
-    print "This is the plotting example of KoalaTools toolkit.\nEnter a number in order to see that particular example.\n\t(1) Fast real time plotting of sin + noise\n\t(2) Slower real time plotting of multiple lines sin + noise\n"
+    print ("This is the plotting example of KoalaTools toolkit.\nEnter a number in order to see that particular example.\n\t(1) Fast real time plotting of sin + noise\n\t(2) Slower real time plotting of multiple lines sin + noise\n")
 
-    choice = raw_input("Enter your choice:")
+    choice = input("Enter your choice:")
 
     if "1" in choice:
         plot_1d()
